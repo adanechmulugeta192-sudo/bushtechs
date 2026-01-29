@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Trash2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../components/admin/AdminSidebar";
-
 export default function AdminTeam() {
   const [members, setMembers] = useState([]);
   const [form, setForm] = useState({ name: "", role: "", linkedin_url: "", twitter_url: "" });
