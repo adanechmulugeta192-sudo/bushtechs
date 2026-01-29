@@ -1,0 +1,64 @@
+/* ALL 4 SERVICES IN ONE LINE ALWAYS */
+.services-row {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 26px;
+  width: 100%;
+  padding: 10px 0;
+  flex-wrap: nowrap;     /* prevents cutting */
+}
+
+/* SERVICE CARD */
+.service-card {
+  width: 24%;
+  min-width: 260px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 26px;
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.45);
+  transition: 0.35s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+/* HOVER = RAISE + NEON */
+.service-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(255, 0, 255, 0.4);
+  box-shadow: 0 20px 40px rgba(255,0,255,0.3);
+}
+
+/* ACTIVE CLICK ANIMATION */
+.service-card.active {
+  animation: techPulse 1s ease-out;
+  border-color: #00eaff;
+  box-shadow: 0 0 40px #00eaff;
+}
+
+.service-card.active .card-glow {
+  animation: techWave 1s ease-out;
+}
+
+/* CLICK WAVE */
+.card-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0,238,255,0.25), transparent 60%);
+  border-radius: 16px;
+  opacity: 0;
+}
+
+/* KEYFRAMES */
+@keyframes techPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes techWave {
+  0% { opacity: 1; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(2.5); }
+}
