@@ -25,7 +25,7 @@ const PROJECTS = [
     location: "Addis Ababa",
     status: "Completed",
     year: "2025",
-    link: "https://kumacon-frontend.vercel.app/" 
+    link: "https://kumacon1-frontend.vercel.app/" 
   }
 ];
 
