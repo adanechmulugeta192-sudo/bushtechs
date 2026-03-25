@@ -14,7 +14,7 @@ const PROJECTS = [
     location: "Addis Ababa",
     status: "Completed",
     year: "2025",
-    link: "https://hopeenergy-emw.com/"
+    link: "https://bushtechs-32jb.vercel.app/"
   },
   { 
     id: 2,
