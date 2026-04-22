@@ -1,112 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Trash2, Upload } from "lucide-react";
+import { Trash2, Upload, Plus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../../components/admin/AdminSidebar";
+
+// ✅ DYNAMIC API CONFIGURATION
+const API_BASE = window.location.hostname === "localhost" 
+  ? "http://localhost:5000" 
+  : "https://bushtechs-backend-f03g.onrender.com";
 
 export default function AdminServices() {
   const [services, setServices] = useState([]);
   const [form, setForm] = useState({ title: "", description: "" });
   const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState({ type: "", msg: "" });
   const navigate = useNavigate();
-  const API_URL = "http://localhost:5000/api";
 
-  // ------------------------------------------
-  // 🌙 MODERN DARK THEME STYLES
-  // ------------------------------------------
-
-  const pageStyle = {
-    display: "flex",
-    minHeight: "100vh",
-    backgroundColor: "#121212", // Matte Black
-    color: "#e0e0e0",
-    fontFamily: "'Inter', sans-serif",
-  };
-
-  const contentStyle = {
-    flex: 1,
-    marginLeft: "260px",
-    padding: "40px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center", // CENTER CONTENT
-  };
-
-  const cardStyle = {
-    width: "100%",
-    maxWidth: "600px",
-    background: "#1e1e1e", // Dark Surface
-    padding: "30px",
-    borderRadius: "15px",
-    marginBottom: "30px",
-    border: "1px solid #333",
-    borderTop: "4px solid #6a00ff", // Purple accent
-    boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-  };
-
-  const listItemStyle = {
-    width: "100%",
-    maxWidth: "600px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "18px",
-    background: "#1e1e1e",
-    borderRadius: "12px",
-    border: "1px solid #333",
-    color: "#fff",
-    marginBottom: "12px",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-  };
-
-  const inputStyle = {
-    width: "100%", // Ensure inputs fill container
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #444",
-    background: "#2d2d2d",
-    color: "#fff",
-    outline: "none",
-  };
-
-  const uploadBox = {
-    width: "100%",
-    padding: "12px",
-    background: "#2d2d2d",
-    borderRadius: "8px",
-    border: "1px dashed #555",
-    color: "#aaa",
-    cursor: "pointer",
-  };
-
-  const saveBtn = {
-    padding: "14px",
-    background: "#6a00ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    width: "100%",
-    marginTop: "10px",
-    fontSize: "1rem",
-    transition: "0.2s",
-  };
-
-  const deleteBtn = {
-    color: "#f87171",
-    background: "rgba(239, 68, 68, 0.15)",
-    border: "none",
-    padding: "8px 12px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-
-  // ==========================================
-  // LOGIC
-  // ==========================================
+  // --- STYLES ---
+  const pageStyle = { display: "flex", minHeight: "100vh", backgroundColor: "#0a0a0c", color: "#e0e0e0", fontFamily: "'Inter', sans-serif" };
+  const contentStyle = { flex: 1, marginLeft: "260px", padding: "40px", display: "flex", flexDirection: "column", alignItems: "center" };
+  const cardStyle = { width: "100%", maxWidth: "600px", background: "#16161a", padding: "30px", borderRadius: "16px", marginBottom: "30px", border: "1px solid #222", borderTop: "4px solid #6a00ff", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" };
+  const listItemStyle = { width: "100%", maxWidth: "600px", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px", background: "#16161a", borderRadius: "12px", border: "1px solid #222", color: "#fff", marginBottom: "12px" };
+  const inputStyle = { width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #333", background: "#000", color: "#fff", outline: "none", fontSize: "14px" };
+  const uploadBox = { width: "100%", padding: "15px", background: "#000", borderRadius: "8px", border: "2px dashed #333", color: "#888", cursor: "pointer", textAlign: "center" };
+  const saveBtn = { padding: "14px", background: "linear-gradient(90deg, #6a00ff, #d900ff)", color: "#fff", border: "none", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", width: "100%", marginTop: "10px", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px" };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -116,16 +33,18 @@ export default function AdminServices() {
 
   const fetchServices = async () => {
     try {
-      const res = await fetch(`${API_URL}/services`);
+      const res = await fetch(`${API_BASE}/api/services`);
       const data = await res.json();
-      setServices(data);
+      setServices(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch Error:", err);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setStatus({ type: "", msg: "" });
     const token = localStorage.getItem("token");
 
     const formData = new FormData();
@@ -133,99 +52,111 @@ export default function AdminServices() {
     formData.append("description", form.description);
     if (image) formData.append("image", image);
 
-    await fetch(`${API_URL}/admin/services`, {
-      method: "POST",
-      headers: { "x-auth-token": token },
-      body: formData,
-    });
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/services`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }, // ✅ Bearer Auth
+        body: formData,
+      });
 
-    alert("Service Added!");
-    setForm({ title: "", description: "" });
-    setImage(null);
-    fetchServices();
+      if (res.ok) {
+        setStatus({ type: "success", msg: "Service deployed successfully!" });
+        setForm({ title: "", description: "" });
+        setImage(null);
+        fetchServices();
+      } else {
+        setStatus({ type: "error", msg: "Failed to save service." });
+      }
+    } catch (err) {
+      setStatus({ type: "error", msg: "Server connection error." });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setStatus({ type: "", msg: "" }), 3000);
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete service?")) return;
-
+    if (!window.confirm("Delete this service permanently?")) return;
     const token = localStorage.getItem("token");
 
-    await fetch(`${API_URL}/admin/services/${id}`, {
-      method: "DELETE",
-      headers: { "x-auth-token": token },
-    });
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/services/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
 
-    fetchServices();
+      if (res.ok) fetchServices();
+    } catch (err) {
+      console.error("Delete Error:", err);
+    }
   };
-
-  // ==========================================
-  // RENDER
-  // ==========================================
 
   return (
     <div style={pageStyle}>
       <AdminSidebar />
-
       <div style={contentStyle}>
-        <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "30px", color: "#fff" }}>
-          Service Manager
+        <h1 style={{ fontSize: "2.5rem", fontWeight: "800", marginBottom: "40px", color: "#fff", letterSpacing: "-1px" }}>
+          Service <span style={{color: "#6a00ff"}}>Engine</span>
         </h1>
 
-        {/* ADD SERVICE CARD */}
         <div style={cardStyle}>
-          <h3 style={{ color: "#fff", marginBottom: "20px" }}>Add New Service</h3>
+          <h3 style={{ color: "#fff", marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
+            <Plus size={20} color="#6a00ff" /> Register New Service
+          </h3>
 
           <form onSubmit={handleSubmit} style={{ display: "grid", gap: "15px" }}>
-            <input
-              placeholder="Title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-              style={inputStyle}
-            />
+            <input placeholder="Service Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required style={inputStyle} />
+            <textarea placeholder="Detailed Description" rows="3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required style={{...inputStyle, resize: "vertical"}} />
+            
+            <div style={uploadBox}>
+              <label style={{ cursor: "pointer", display: "block" }}>
+                <Upload size={24} style={{ marginBottom: "8px", color: image ? "#6a00ff" : "#444" }} />
+                <div style={{fontSize: "13px"}}>{image ? <span style={{color: "#fff"}}>{image.name}</span> : "Select Icon/Image (JPG/PNG)"}</div>
+                <input type="file" hidden onChange={(e) => setImage(e.target.files[0])} />
+              </label>
+            </div>
 
-            <textarea
-              placeholder="Description"
-              rows="3"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              required
-              style={inputStyle}
-            />
-
-            <input 
-              type="file" 
-              onChange={(e) => setImage(e.target.files[0])} 
-              style={uploadBox} 
-            />
-
-            <button type="submit" style={saveBtn}>Save Service</button>
+            <button type="submit" disabled={loading} style={saveBtn}>
+              {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={18} />}
+              {loading ? "Processing..." : "Deploy Service"}
+            </button>
           </form>
+
+          {status.msg && (
+            <div style={{ marginTop: "15px", color: status.type === "success" ? "#4ade80" : "#f87171", fontSize: "14px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+              {status.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              {status.msg}
+            </div>
+          )}
         </div>
 
-        {/* LIST */}
         <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {services.map((s) => (
-            <div key={s.id} style={listItemStyle}>
-                <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                    {/* Optional: Display Image if available, logic preserved from typical patterns */}
-                    {s.image && <img src={`http://localhost:5000${s.image}`} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover" }} />}
-                    <div>
-                        <strong style={{ color: "#fff", display: "block" }}>{s.title}</strong>
-                        {/* Short description preview for better UX */}
-                        <div style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>
-                            {s.description.length > 50 ? s.description.substring(0, 50) + "..." : s.description}
-                        </div>
-                    </div>
+          {services.map((s) => (
+            <div key={s._id || s.id} style={listItemStyle}>
+              <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                <div style={{ width: "50px", height: "50px", background: "#000", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "1px solid #333" }}>
+                  {s.image ? (
+                    <img src={`${API_BASE}/${s.image}`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <Plus size={20} color="#222" />
+                  )}
                 </div>
+                <div>
+                  <strong style={{ color: "#fff", display: "block", fontSize: "16px" }}>{s.title}</strong>
+                  <div style={{ fontSize: "12px", color: "#666", marginTop: "2px", maxWidth: "350px" }}>
+                    {s.description.length > 60 ? s.description.substring(0, 60) + "..." : s.description}
+                  </div>
+                </div>
+              </div>
 
-                <button onClick={() => handleDelete(s.id)} style={deleteBtn}>
+              <button onClick={() => handleDelete(s._id || s.id)} style={deleteBtn}>
                 <Trash2 size={18} />
-                </button>
+              </button>
             </div>
-            ))}
+          ))}
         </div>
       </div>
+      <style>{`.animate-spin { animation: spin 1s linear infinite; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
