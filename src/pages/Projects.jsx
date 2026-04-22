@@ -1,33 +1,35 @@
 import React, { useEffect, useState } from "react";
 import { MapPin, CheckCircle2, ArrowUpRight, ExternalLink, Calendar, Loader2 } from "lucide-react";
-import heroBg from "../assets/1hero-bg.jpg"; // Kept as requested
+import heroBg from "../assets/1hero-bg.jpg"; 
 import { useTheme } from "../context/ThemeContext"; 
 
-// API Base URL
-const API_URL = "http://localhost:5000/api/projects";
-const SERVER_URL = "http://localhost:5000"; // For images
+// --- DYNAMIC API CONFIGURATION ---
+// This ensures it uses Render on the web and localhost during dev
+const API_BASE = import.meta.env.VITE_API_BASE; 
+const API_URL = `${API_BASE}/projects`;
+// We extract the domain (without /api) for serving images
+const SERVER_URL = API_BASE ? API_BASE.replace('/api', '') : "";
 
 export default function Projects() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   
-  // 1. STATE FOR DATA
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 2. FETCH DATA FROM BACKEND
   useEffect(() => {
     window.scrollTo(0, 0);
     
     const fetchProjects = async () => {
       try {
+        // Use the dynamic API_URL
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error("Failed to fetch projects");
         const data = await response.json();
         setProjects(data);
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error fetching projects:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -37,18 +39,16 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
-  // ✅ HELPER: Fixes image paths to ensure they are visible
+  // ✅ HELPER: Fixes image paths dynamically
   const getImageUrl = (img) => {
     if (!img) return "https://via.placeholder.com/600x400?text=No+Image";
     
-    // If it's already a full web link, return it
     if (img.startsWith("http")) return img; 
     
-    // ✅ FIX: Replace backslashes (Windows) with forward slashes
-    // AND ensure there is a slash '/' at the start
     const cleanImg = img.replace(/\\/g, "/");
     const finalPath = cleanImg.startsWith("/") ? cleanImg : `/${cleanImg}`;
 
+    // Links image to your Render server
     return `${SERVER_URL}${finalPath}`; 
   };
 
@@ -68,7 +68,6 @@ export default function Projects() {
 
   return (
     <section style={{ backgroundColor: styles.bg, padding: "100px 0", minHeight: "100vh", position: "relative" }}>
-      {/* Header */}
       <div className="container" style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px", position: "relative", zIndex: 2 }}>
         <div style={{ textAlign: "center", marginBottom: "50px" }}>
           <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: "3rem", color: styles.title, marginBottom: "10px" }}>Success Stories</h2>
@@ -87,7 +86,7 @@ export default function Projects() {
         {error && (
           <div style={{ textAlign: "center", padding: "50px", color: "red" }}>
             <p>Error: {error}</p>
-            <p>Is your backend server running?</p>
+            <p>Unable to connect to BushTechs Server.</p>
           </div>
         )}
 
@@ -102,7 +101,7 @@ export default function Projects() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px" }}>
           {projects.map((project) => (
             <article 
-              key={project.id || project._id} // Added fallback for MongoDB _id
+              key={project.id} 
               style={{ background: styles.cardBg, border: styles.cardBorder, borderRadius: "16px", overflow: "hidden", transition: "0.3s", cursor: "pointer" }}
               onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-10px)"}
               onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
